@@ -1,39 +1,54 @@
 import sys, pygame
 import math
 
-g = 9.8
-screen_size = width, height = 640, 480
-
-targetY = 150
-targetX = 100
-
-bullet_x = 100
-bullet_y = 20
-
-targetX_change = 0
-targetY_change = 0
-
-win = pygame.display.set_mode(screen_size)
+screen_width = 640
+screen_height = 480
+win = pygame.display.set_mode((screen_width, screen_height))
 white = (255, 255, 255)
 black = (0, 0, 0)
 
-'''def get_intervals(u, theta):
-    t_flight = 2 * u * math.sin(theta) / g
-    intervals = []
-    start = 0
-    interval = 0.005
-    while start < t_flight:
-        intervals.append(start)
-        start = start + interval
-    return intervals
+# target
+targetY = 150
+targetX = 100
+targetX_change = 0
+targetY_change = 0
 
-def update_position(i, circle, intervals, u, theta):
-    t = intervals[i]
-    x = u * math.cos(theta) * t
-    y = u * math.sin(theta) * t - 0.5 * g * t * t
-    circle.center = x, y
-    return circle,
-'''
+# bullet
+velocity = 10
+theta = 20
+time = 0
+bullet_x = 0
+bullet_y = screen_height
+bullet_state = "ready"
+
+
+def update_position(t):
+    g = 9.8 / 100
+    global bullet_x
+    global bullet_y
+    global bullet_state
+    global velocity
+    global theta
+    if bullet_state is "fire":
+        bullet_x = velocity * math.cos(theta) * t
+        bullet_y = velocity * math.sin(theta) * t - 0.5 * g * t * t
+        bullet_y = screen_height - bullet_y
+        #print(str(bullet_x) + "   " + str(bullet_y))
+    if bullet_x > screen_width or bullet_x < 0 or bullet_y > screen_height or bullet_y < -1:
+        bullet_state = "ready"
+        bullet_x = 0
+        bullet_y = screen_height
+
+
+def fire_bullet():
+    global bullet_x
+    global bullet_y
+    global bullet_state
+    global time
+    if bullet_state is "ready":
+        time = 0
+        bullet_state = "fire"
+
 
 while 1:
     for event in pygame.event.get():
@@ -49,13 +64,19 @@ while 1:
             if event.key == pygame.K_DOWN:
                 targetY_change = .4
 
-        if event.type == pygame.KEYDOWN:
-
             if event.key == pygame.K_LEFT:
                 targetX_change = -.4
 
             if event.key == pygame.K_RIGHT:
                 targetX_change = .4
+
+            if event.key == pygame.K_SPACE:
+                fire_bullet()
+
+            if event.key == pygame.K_w:
+                theta += 0.1
+            if event.key == pygame.K_s:
+                theta -= 0.1
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or pygame.K_RIGHT:
@@ -77,7 +98,14 @@ while 1:
     targetX += targetX_change
     targetY += targetY_change
 
+    if bullet_state is "fire":
+        time = time + 0.05
+        update_position(time)
+
+    bullet = pygame.Rect(bullet_x, bullet_y, 10, 10)
+    print(str(bullet_x) + "   " + str(bullet_y))
     target = pygame.Rect(targetX, targetY, 50, 50)
     win.fill(black)
     win.fill(white, target)
+    win.fill(white, bullet)
     pygame.display.flip()
